@@ -1,0 +1,8 @@
+sentence-transformers>=2.2.2
+transformers>=4.30.0
+numpy>=1.24.0
+chromadb>=0.3.21
+opencv-python>=4.7.0.72
+torch>=1.13.1        # Needed by sentence-transformers and transformers
+scikit-learn>=1.2.0  # Often used with sentence-transformers
+tqdm>=4.65.0         # For progress bars, commonly used with these libs
