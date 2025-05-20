@@ -4,6 +4,11 @@ import os
 from preprocessing import upload_your_dataset
 from transformers import BlipProcessor, BlipForQuestionAnswering
 from sentence_transformers import SentenceTransformer
+import logging
+import chromadb
+import streamlit as st
+
+
 def init_worker_VQA():
     global video_captioning_processor
     global video_captioning_model
@@ -23,26 +28,97 @@ def folder_walkthrough(root_folder):
 
 
 # ------------------- QUERY FUNCTION -------------------
-def QUERY(Query,chromadb_collection,video_address):
+def QUERY(Query):
   global text_vectorization_model
   ChromaDB_Query_Embeddings = text_vectorization_model.encode(Query, convert_to_numpy=True)
   ChromaDB_Query_result = chromadb_collection.query(query_embeddings = ChromaDB_Query_Embeddings,
                  n_results=1)
-  print('using chromaDB: Your query is related to the document is at ',video_address[int(ChromaDB_Query_result['ids'][0][0])])
+  st.write(f"using chromaDB: Your query is related to the document is at :{ChromaDB_Query_result['ids'][0][0]}" )
 
 # ------------------- Safe Main Runner -------------------
 
 if __name__ == '__main__':
+    
+    st.title('WELCOME TO VIDEO-RETRIVEAL SYSTEM PROTOTYPE')
+    client = chromadb.PersistentClient(path='/home/jayanth/Documents/SMART-RETRIVEVAL /CHROMADBv1')
+    chromadb_collection = client.get_or_create_collection(name = 'VIDEOs')
+
+    streamlit_col1,streamlit_col2 = st.columns(2)
+
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
+    pipeline = logging.getLogger('pipeline')
+    pipeline.info('Starting the execution...')
     tic = time.time()
+    pipeline.info('Initializing workers...')
     init_worker_VQA()
     init_worker_text_vectorization()
-    video_address = folder_walkthrough('/home/jayanth/Documents/SMART-RETRIVEVAL /VIDEO_DATASET')
-    chromadb_collection = upload_your_dataset(video_address)
-    toc = time.time()
-    print('Time taken to upload the dataset:', toc - tic)
-    print('Dataset uploaded successfully!')
-    while True:
-        Query =  input('Enter your query: ')
-        if Query == 'exit':
-            break
-        QUERY(Query,chromadb_collection,video_address)
+    pipeline.info('Initialization complete.')
+    pipeline.info('Getting video addresses...') 
+    
+    video_address = []
+
+    def save_uploaded_file(uploaded_files):
+           folder="/home/jayanth/Documents/SMART-RETRIVEVAL /STORAGE"
+           os.makedirs(folder, exist_ok=True)
+           file_path = os.path.join(folder, uploaded_files.name)
+           with open(file_path, "wb") as f:
+               f.write(uploaded_files.getbuffer())  # Efficient and clean
+           return file_path
+    if 'all_uploaded_files' not in st.session_state:
+        st.session_state.all_uploaded_files = set()
+    if 'new_uploaded_files' not in st.session_state:
+        st.session_state.new_uploaded_files = []
+
+    with streamlit_col1: 
+        uploaded_files = st.file_uploader('Upload your video files here:', type=['mp4'], accept_multiple_files=True)    
+
+        if uploaded_files:
+           
+           st.session_state.new_uploaded_files = [file for file in uploaded_files if file.name not in st.session_state.all_uploaded_files]
+           if not st.session_state.new_uploaded_files:
+                st.warning("No new files to upload to database.")
+
+           elif st.button('🚀 Upload & Process'): 
+              
+              for files in st.session_state.new_uploaded_files:
+                 video_address.append(save_uploaded_file(files))
+
+              pipeline.info('no of videos:%s', len(video_address))
+              pipeline.info('Video addresses retrieved.')
+              pipeline.info('Uploading dataset...')
+
+              upload_your_dataset(video_address)
+
+              pipeline.info('Dataset uploaded successfully.')
+              toc = time.time()
+              pipeline.info('Time taken to upload the dataset: %s seconds', toc - tic)
+              pipeline.info('DATASET_UPLOADED...')
+              for files in st.session_state.new_uploaded_files:
+                 st.session_state.all_uploaded_files.add(files.name)
+              st.success(f"Processed new files!")
+    
+    #video_address = folder_walkthrough(dataset_path)
+    def QUERY(Query,chromadb_collection):
+       global text_vectorization_model
+       ChromaDB_Query_Embeddings = text_vectorization_model.encode(Query, convert_to_numpy=True)
+       ChromaDB_Query_result = chromadb_collection.query(query_embeddings = ChromaDB_Query_Embeddings,
+                 n_results=1)
+       st.write(f"using chromaDB: Your query is related to the document is at :{ChromaDB_Query_result['ids'][0][0]}" )
+       st.success('Query submitted successfully.')
+    
+
+    with streamlit_col2:
+        
+        if chromadb_collection.count():
+            if "query" not in st.session_state:
+                st.session_state.query = ""
+            Query = st.text_input('Enter your query: ')
+            if Query:
+               if st.button('Submit'):
+                  QUERY(Query,chromadb_collection)
+                  pipeline.info('Exiting the program.')  
+        else:
+            st.write("Insufficient data! Upload your data for querying")
+            
+            
+
