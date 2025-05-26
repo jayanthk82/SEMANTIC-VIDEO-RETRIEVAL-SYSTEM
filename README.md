@@ -1,4 +1,4 @@
-# 🎥 Smart Video Retrieval System
+# 🎥 SEMANTIC VIDEO RETRIEVAL SYSTEM
 
 A **production-ready, multimodal video retrieval system** that matches videos to **natural language queries** using powerful vision-language models and LLMs. This system enables **semantic video search** by leveraging frame-level visual summaries and enriched audio transcripts, all indexed in a vector database for blazing-fast similarity search.
 
