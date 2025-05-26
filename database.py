@@ -7,16 +7,13 @@ def generate_time_based_id():
     current_time = time.localtime()
     formatted_time = time.strftime("Date: %Y-%m-%d  Time: %H:%M:%S", current_time)
     return formatted_time
-    '''timestamp = int(time.time() * 1000)  # Milliseconds
-    random_part = random.randint(100, 999)
-    return f"{timestamp}{random_part}"'''
 
 def chromadb_setup(vector, summary,video_address):
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     dbpipeline = logging.getLogger('database_pipeline')
     dbpipeline.info('Setting up ChromaDB...')
-    client = chromadb.PersistentClient(path='/home/jayanth/Documents/SMART-RETRIVEVAL /CHROMADBv1')
+    client = chromadb.PersistentClient(path='SET_YOUR_PATH')
     dbpipeline.info('ChromaDB client created.')
     dbpipeline.info('Creating or getting collection...')
     collection = client.get_or_create_collection(name='VIDEOs')
