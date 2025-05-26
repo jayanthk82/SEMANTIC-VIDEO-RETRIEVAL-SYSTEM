@@ -6,10 +6,10 @@ import cv2
 from PIL import Image
 from database import chromadb_setup
 import logging
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(filename)s - %(module)s - %(funcName)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 pipeline = logging.getLogger('pipeline')
 
-    
 def init_worker_VQA():
     global video_captioning_processor
     global video_captioning_model
